@@ -1,0 +1,544 @@
+----========================================================================----
+    Fuzziqer Software GameCube Action Replay Simulator and Control Simulator    
+----========================================================================----
+                               Public Beta v0.9.9                               
+-------------------------------==================-------------------------------
+
+!!!!!!!!!  This program is not for the faint of heart. It is a public  !!!!!!!!!
+!WARNING!  beta. You know what that means; there are probably many     !WARNING!
+!!!!!!!!!  bugs still in it. Use it at your own risk.                  !!!!!!!!!
+
+***  This documentation is very incomplete. This is partly because GCARS-CS  ***
+***  itself is largely incomplete. Some parts of the program just aren't     ***
+***  documented. Others just aren't there at all. I advise just messing with ***
+***  it for a while. You'll get used to it.                                  ***
+
+-----------------------------------==========-----------------------------------
+                                   Change Log                                   
+-----------------------------------==========-----------------------------------
+
+v0.9.9: DEBUG Public Beta 9
+  - Seems like we'll just NEVER get to v1.0, doesn't it? ;)
+  - New default code list file
+  - Multiple local players IMPLEMENTED, not TESTED. To have multiple local
+    players, set all the local players' IPs to be the same.
+  - Some GCARS save file handling code should now be fixed (used to not save
+    code lists larger then one block properly)
+  - Small change in memcard libs - should fix problems with some 3rd-party cards
+  - Server mode IMPLEMENTED, not TESTED. Server app is still underway.
+  - Dependent code lists (did we have this in the last version?)
+  - Disc ripper DOES work, but probably produces corrupt files
+
+v0.9.5: DEBUG Public Beta 8
+  - Memory Card Manager implemented
+  - BBA libs had a bug which caused half of every other packet to drop in a
+    1K/packet data stream. Fixed.
+  - Memory card libs may be compatible with more 3rd-party cards now (minor
+    bugfixes throughout memcard libs)
+  - Huge Levine update; most code in Levine was rewritten.
+  - Debug menu implemented
+
+v0.9.2: Public Beta 7
+  - GCARS-CS save file now has an icon (thanks to DarkAkuma)
+  - Another Levine bug fixed (thanks Neo-Ice yet again)
+  - Major change in the GUI: Game Options screen added (press Y in the Game
+    List menu to open Game Options)
+  - Update speeds can now be changed for each game
+
+v0.9: Public Beta 6
+  - eth_init fixed again after reports that it doesn't work with PSOLoad....
+    all should be well now
+  - New debugging functions added to CS hook, and the hook is actually smaller!
+    Thanks for the idea, |3laze
+  - Pointer codes fixed in GCARS Reader.... SSBM should work much better now.
+  - Messed with DHCP a bit.... still doesn't work with XLink, but I'm working
+    on it.
+  - Added "Cancel" on Waiting for Players screen (thanks Neo-Ice again)
+  - BBA Speed is broken again.... oh well....
+  - Bug fixed where Levine would think that game names were game IDs
+  - Updated Credits screen
+  - Script text files no longer included; they come pre-entered now :)
+
+v0.8: Public Beta 5
+  - New eth_init function! This means that GCARS-CS might work with SDLoad and
+    Samson's loader now.
+  - Different method of video mode detection implemented (for some loaders)
+  - Levine can now handle much longer codes and scripts than before (thanks
+    Neo-Ice for showing me this one)
+  - Some small GUI changes (Please Wait screen, Credits screen)
+
+v0.7: Public Beta 4
+  - Messed with DHCP code a bit.... it should work with XLink now (untested)
+  - Removed one call to hookproc in CSStart.... SSBM now works
+  - CS pad engine now takes only the player 1 address (it calculates the others)
+  - New savefile format.... back up your code list file before using GCARS
+  - Games and codes can now be sorted.... press Z to do so
+
+v0.6: Public Beta 3
+  - How could I have not seen this before? Fixed a bug in ARP response code
+  - Windows PadSim included, finally
+
+v0.5: Public Beta 2
+  - Moved DHCP code a bit... should be more stable
+  - Deleted CSSendData()... should fix "broken" network code
+  - Diffuse's gsodfix.dol included
+
+v0.4: Public Beta 1
+  - Fixed bug in GCARS Reader with pointer codes
+  - GCARS-CS Tournament Server project started
+
+v0.3: Private Beta
+  - CS and GCARS hooks merged, more stable & faster
+  - Fixed bug in GCARS Writer with pointer codes
+  - Vastly improved Network Setup screen
+  - Levine introduced
+  - Network code now "broken" (but I didn't know it at the time)
+
+v0.1a: Private Beta
+  - CS now works
+  - New CS protocol (more stable)
+  - Improved memory card support
+
+v0.1: Developmental Stage
+  - Control Simulator extension hooks written
+  - GCARS now works
+  - Network Setup screen added
+  - New CSNet libraries created
+  - Crappy memory card support
+
+v0.0.1: Developmental Stage
+  - Control Simulator base hooks written
+  - GCARS hooks written
+  - Minimal GUI written
+
+v0.0: arproj.c
+  - First code in GCARS written
+
+------------------------------------========------------------------------------
+                                    Contents                                    
+------------------------------------========------------------------------------
+
+I. GCARS-CS
+   A. What is this, anyway?
+   B. A Few Words of Warning (IMPORTANT!)
+
+II. GCARS Mode
+   A. The Code List
+
+III. CS Mode
+   A. Network Setup
+   B. The Code List
+   C. Starting a Game
+
+IV. Game Loading Mode
+   A. Why is this here?
+
+V. Levine
+   A. Setup
+   B. Usage
+
+VI. Memory Card Manager
+
+VII. Technical Details
+   A. GCARS code types
+   B. ControlSim script code types
+
+VIII. Credits, Copyright, and Thanks
+
+===========
+I. GCARS-CS
+===========
+
+    ------------------------
+    A. What is this, anyway?
+    ------------------------
+    
+    GCARS-CS is the first major project that I've actually come close to
+    finishing. It's a complete Action Replay style cheat device and an online
+    play enabler rolled into one program. You probably already knew what this
+    is, though, because of all the ranting about it I've posted on my site and
+    at Team-GX. :)
+    
+    Why am I starting with Beta 5? Because it took that many major revisions to
+    get the program working. I don't wanna hear any complaining about how long
+    this took.
+    
+    -------------------------
+    B. A Few Words of Warning
+    -------------------------
+
+    The Control Simulator should automatically disable the memory cards. If it
+    doesn't, however, then be careful! DO NOT, I repeat, DO NOT allow any game
+    to save to the memory card while the Control Simulator is running! It WILL
+    corrupt your save file! I recommend pulling out your memory cards after
+    loading the game (if ControlSim doesn't disable them), and using GCARS
+    codes to unlock all characters, stages, and whatnot. This bug does not
+    exist in GCARS, only in the ControlSim. GCARS itself will not corrupt data
+    on your memory cards.
+
+    Speaking of memory cards, if you plan to use a GCARS-CS code list file, you
+    must meet the following three conditions:
+    1. The memory card must be an official Nintendo memory card 59 or 251.
+       Nintendo memory card 1019s might work, but are untested at the moment.
+       If somebody could test one and post results, that would be very helpful.
+    2. The memory card must be inserted before starting GCARS-CS.
+    3. The memory card must remain inserted as long as GCARS-CS is running.
+    Once you start a game, you may remove memory cards. If you have two
+    memory cards inserted, GCARS-CS will ask you which one to use. You can't
+    change memory cards after this, so choose wisely.
+
+    The code list file is usually only one block, unles you've entered quite a
+    bit of codes and scripts.
+
+==============
+II. GCARS Mode
+==============
+
+    ----------------
+    A. The Code List
+    ----------------
+    
+    There are actually three different types of code lists in GCARS-CS. The
+    first one is the GCARS code list, which is similar to the Action Replay
+    code list, except there is no differentiation between regions.
+
+    Yes, the Code List/Game List menus act the same way they do on an Action
+    Replay. There are a few differences, though, which you'll see after looking
+    at the controls for these menus below.
+
+    After adding, deleting or editing a code, and before starting a game,
+    GCARS-CS will automatically save the code list file.
+
+    Here are the controls for the Game List menu:
+    Up/Down: Select game
+    A/Start: Go to Code Select menu
+    R: Add New Game (you'll be promted for the name and the Game ID)
+    L: Delete Selected Game (you won't be prompted for confirmation!)
+    Y: Edit Selected Game's Information
+    Z: Sort Games
+    B: Go Back to the Main Menu
+
+    Here are the controls for the Code List menu:
+    Up/Down: Select code
+    A: Enable/Disable Selected Code
+    Start: Start Game
+    R: Add New Code (you'll be prompted for the name and the code values)
+    L: Delete Selected Code (you won't be prompted for confirmation!)
+    Y: Edit Selected Code's Name and Values
+    Z: Sort Codes
+    B: Go Back to GCARS Game Select
+
+    And yes, you can turn off enable codes. It's not a bug, it's something that
+    I figured nobody would be dumb enough to do. But when you add codes, they're
+    off by default, so make sure you turn on an enable code after adding it.
+
+============
+III. CS Mode
+============
+
+    ----------------
+    A. Network Setup
+    ----------------
+
+    Before we start..... you're not using a WaveBird, are you? Good. WaveBirds
+    have a weird tendency to screw up network games. We still don't know exactly
+    why. Only use a standard controller (no microphones, keyboards, steering
+    wheels, etc.).
+    
+    This is one reason I said that this isn't for the faint of heart - you have
+    to have the IP addresses of all the players in the game. First, pick a
+    random Network Game ID for your online game and put it in the Network Game
+    ID field. All the players in your game must have the same Network Game ID.
+    Try to use something uniquely random like 1863FE8A, not something simple
+    like 22222222.
+    
+    After you select your Net Game ID, choose which players will get which
+    controllers. Enter their IP addresses in the specified slots (i.e. player
+    1's IP in IP Address 1, player 2's IP in IP Address 2, etcetera). Your
+    own IP should be a LAN IP (i.e. 192.168...), as should the IPs of other
+    local players. If you're playing with Internet players, enter their
+    external IP addresses.
+    
+    Now you have to tell ControlSim which controller you're playing as. Select
+    Local Controller from the Network Setup menu, and pick which controller
+    you're going to use in the game. Don't change your controller yet - if you
+    unplug it, the GUI will not restart it, and you'll be stuck with a dead
+    controller. Wait until the game starts to change it.
+    
+    Ok, if this is an Internet game (as opposed to a LAN game), you'll need to
+    know your Subnet Mask and Default Gateway Address. You have two options. If
+    you have a DHCP server, you can set your IP address to zero and it'll fetch
+    the Subnet Mask and Default Gateway Address also. Don't try to do this if
+    you don't have a DHCP server; GCARS-CS will crash. If you don't have a DHCP
+    server but do know them, go right ahead and enter them. If you're not sure
+    about either, ask your network administrator.
+    
+    Don't do anything with the BBA Speed option; it doesn't work right now.
+    
+    Whew.... got that out of the way. All right..... now it's time to enter
+    scripts.
+    
+    ----------------
+    B. The Code List
+    ----------------
+    
+    The Control Simulator Game List Select screen is almost the same as the
+    GCARS Game List screen, except you can't start a game directly from it.
+
+    Here are the controls for the Game List menu:
+    Up/Down: Select game
+    Y/A: Edit selected game's info
+    B: Go back to ControlSim Setup
+
+    ------------------
+    C. Starting a Game
+    ------------------
+    
+    So after you've entered your network configuration, go to the Select Game
+    menu (from the ControlSim menu). Choose the game you want to play (For now,
+    there's only Sonic Adventure 2: Battle), and press A or Start. You'll see
+    the Open the Disc Drive screen. Take out whatever disc is in the disc drive
+    and put in whatever game you're going to play. You'll come to the Waiting
+    for Players screen. Press A to change your status from Connected to Ready.
+    As soon as the game starts, you can pull your controller out of port 1 and
+    plug it into whichever one you're going to use.
+    
+    If you're player 1, you should check with all the other players (via an
+    outside IM service like MSN Messenger) to see if they're also at the
+    Waiting for Players screen. If not, be a good sport and wait for them. Once
+    everyone's there, press Start. You're now online! If you're using a good
+    script, the games should stay synchronized for as long as all the players'
+    GameCubes are on and connected to the Internet.
+
+    If you're not player 1, just wait until Player 1 starts the game.
+
+=====================
+IV. Game Loading Mode
+=====================
+
+    In case you're a complete idiot (or didn't have enough sugar today, like
+    me :), this is the "Start Game" option on the Main Menu.
+
+    --------------------
+    A. Why is this here?
+    --------------------
+    
+    Oh, no reason. It's just an easy way to load games region-free. It supports
+    Anaconda right now..... to use it, press L or R at the Open the Disc Drive
+    screen and wait until it says to swap the disc. The L button loads drive
+    code from Cobra03, the R button loads drive code from Cobra04.
+
+=========
+V. Levine
+=========
+
+    Levine is a very easy way to load codes and scripts to GCARS-CS without
+    having to type them in. I use it all the time, because it's fast, and
+    reliable. You do need a working PC, though.
+
+    --------
+    A. Setup
+    --------
+
+    First of all, make sure your PC is up and running before you do this. Then
+    load up GCARS-CS and go to Control Simulator->Network Setup.
+
+    Levine requires two addresses: your GameCube's and your PC's. Your
+    GameCube's IP address must be entered in the local pad slot (if the local
+    pad was pad 3, your GameCube's IP address must be in slot 3, etc.). Your
+    PC's address must be entered into Levine Address at the bottom of the
+    screen.
+
+    As soon as you're done entering your PC's address, Levine will start. It's
+    important that your PC is on, because if it's not, Levine will crash. Once
+    Levine is running on the GameCube, open up the Levine console on your PC and
+    give it your GameCube's IP address.
+    
+    Once you've entered the Levine Address once, it'll save to the memory card.
+    When you start GCARS-CS, Levine is disabled until you go to the Levine
+    Address option again, even if the address is entered already. You have to
+    select Levine Address each time you load GCARS-CS if you want to enable it.
+
+    --------
+    B. Usage
+    --------
+
+    Using Levine is simple enough - just type commands in the console. Commands
+    must be entered in lowercase, but the arguments can be upper or lowercase.
+
+    In Levine v0.6, you can now run commands straight from the command prompt
+    (or a batch file). It's simple; you can do it like this:
+    levine.exe <GameCube's IP address> <command>
+    For example: levine 192.168.1.50 gamename Super Smash Bros. Melee
+
+    Here's a list of commands:
+
+    exit: duh. See if you can guess what this one does.
+
+    verify: verifies that the GameCube is still responding to the Levine
+        console. This will fail if you start a game or go to the Open the Disc
+        Drive screen, and is useful for finding bugs in Levine, because Levine
+        used to just stop responding spontaneously (this has since been fixed).
+
+    gamename: loads a game name. Use this command on the Enter Game Name screen.
+        It's simple enough.... Example: gamename Luigi's Mansion
+
+    gameid: loads a game ID. Use this command on the Enter Game ID screen.
+        It's also pretty simple.... but game IDs must be in capital letters.
+        Example: gameid GALE
+
+    codename: loads a code name. Use this command on the Enter Code Name screen.
+        Works just like gamename. Example: codename Unlock All Missions
+
+    code: loads a code. Use this command on the Enter Code screen.
+        This one is just a little bit more complicated (but not much). Enter the
+        decrypted code after the command. For example, if I wanted to load this
+        code:
+        7EKJ-XDVW-YAWX0
+        MYMH-0EFX-73UMU
+        DET4-QN5Z-RE18G
+
+        I'd decrypt it first, getting:
+        00866CAC 08000000
+        040E67BC 480000CC
+        040E688C 4800000C
+
+        Now I'd remove the first line (the verifier), and put all the codes on
+        the same line, like this:
+        040E67BC 480000CC 040E688C 4800000C
+
+        ....and that's the command: code 040E67BC 480000CC 040E688C 4800000C
+
+    game: loads a game entry, so you don't have to go through the entry screens.
+        It's like gameid and gamename in one command. Use it on the Game List
+        screen.
+        It's really simple; example: game GALE Super Smash Bros. Melee
+
+    script: loads a Control Simulator script. Works just like code, except you
+        don't have to decrypt anything or remove the first line.
+
+    Levine isn't just for loading codes and names anymore. Here are a few of the
+    more advanced commands:
+
+    re: relaunch. Sometimes, if GCARS appears to have crashed, try using this
+        command. It should send you straight back the the main menu.
+
+    cardfile: uploads a file to the current memory card (GCARS must be in the
+        Memory Card Manager for this to work).
+        example: cardfile luigismansionsave.gci
+        Warning: this command may corrupt the file being loaded. Use at your own
+        risk.
+
+    cardimage: uploads a complete card image to the selected memory card (GCARS
+        must be in the Memory Card Manager for this to work).
+        example: cardimage mc251.raw
+        Warning: this command *will* corrupt your memory card. I'm working on
+        fixing this at the moment.
+
+    load: loads a DOL file to the GameCube and runs it. I implemented
+        this because I hate having to wait 2-3 minutes for PSO to boot up each
+        time I rebuild the GCARS DOL file.
+        example: load D:\gamecube\gcos.dol
+        Warning: this command may not work with some DOL files. The only way to
+        find out is to try it.
+
+=======================
+VI. Memory Card Manager
+=======================
+
+    The 1337ness of a (good) unofficial memory card manager has arrived. To open
+    it, select Memory Card Manager from the main menu. It will immediately
+    attempt to open the memory card in Slot A. If it succeeds, you'll see a list
+    of files, their sizes, and their banners. You can do quite a lot from the
+    memory card manager, so I won't waste any more time. Here are the controls:
+
+    Up/Down: select file
+    Z: change card slot (A/B)
+    A: view/edit file info or launch as DOL file
+    X: delete selected file (you WILL NOT be asked for confirmation!)
+    Y: copy selected file to other mem card
+    B: go back to main menu
+    L: send complete memory card image to PC (will be saved as card.dat)
+    R: send selected file to PC (will be saved using the file's name)
+
+    Levine must be running on the PC for L/R to work.
+
+    You can also send files and card images to the GameCube using the new Levine
+    commands. See the section on Levine to find out how to do this.
+
+======================
+VII. Technical Details
+======================
+
+    -------------------
+    A. GCARS code types
+    -------------------
+
+    GCARS supports almost all the code types of the standard AR. GCARS does not
+    have most of the bugs in the AR (like type 0-3-3 writing to CD000000 and the
+    broken signed byte comparisons). I'll list them anyway:
+
+     flags | tested | type | subtype | size | description
+           |   yes  |  z0  |         |      | end code list
+      new  |   no   |  z1  |         |      | memory copy / slow down
+           |   yes  |  z2  |         |      | end condition list
+           |        |  z3  |         |      | run all codes (not required)
+           |   no   |  z4  |         |      | fill and slide
+      new  |   no   |  z4  |         |   3  | pointer memory copy
+      new  |   yes  |  z5  |         |      | function call (sets r3 and r4)
+      new  |   no   |  z6  |         |      | write local player number
+           |   yes  |   0  |    0    |   S  | write and fill
+           |   yes  |   0  |    1    |   S  | write to pointer
+           |   yes  |   0  |    2    |   S  | add
+           |   yes  |   0  |    3    |   2  | hook (enable) code
+           |   yes  |   0  |    3    |   3  | I/O register write
+           |   yes  |   1  |    T    |   S  | if equal
+           |   yes  |   2  |    T    |   S  | if not equal
+           |   yes  |   3  |    T    |   S  | if (signed) less than
+           |   yes  |   4  |    T    |   S  | if (signed) greater than
+           |   yes  |   5  |    T    |   S  | if (unsigned) less than
+           |   yes  |   6  |    T    |   S  | if (unsigned) greater than
+           |   yes  |   7  |    T    |   S  | if logical AND
+
+    -------------------------------
+    B. ControlSim script code types
+    -------------------------------
+
+    ControlSim code types are quite similar. This is because ControlSim reads
+    values using something called the GCARS Reader (as opposed to the GCARS
+    Writer for AR codes). As of now, conditional codes aren't properly
+    supported, but all other codes should work.
+
+     flags | tested | type | subtype | size | description
+           |   yes  |  z0  |         |      | end code list
+           |   yes  |  z2  |         |      | end condition list
+           |   yes  |   0  |    0    |  S   | read
+           |   yes  |   0  |    1    |  S   | read from pointer
+           |   yes  |   1  |    T    |  S   | if equal
+           |   yes  |   2  |    T    |  S   | if not equal
+           |   yes  |   3  |    T    |  S   | if (signed) less than
+           |   yes  |   4  |    T    |  S   | if (signed) greater than
+           |   yes  |   5  |    T    |  S   | if (unsigned) less than
+           |   yes  |   6  |    T    |  S   | if (unsigned) greater than
+           |   yes  |   7  |    T    |  S   | if logical AND
+
+====================================
+VIII. Credits, Copyright, and Thanks
+====================================
+
+This program was created by Fuzziqer Software; copyright 2006. It is free
+software; you may distribute as many UNMODIFIED copies of this as you like.
+
+Special Thanks:
+
+- tmbinc for the IPL Replacement sources
+- Costis, CrowTRobo, tmbinc, and lint_gc for GCLib
+- Sappharad for proving that this is indeed possible, and inspiring me to keep
+  working on it
+- Diffuse and biolizard89 for putting up with hours of repeated failures in
+  testing :)
+- Peter for libOGC 2003-06-22
+- Parasyte for GCNrd (wouldn't be possible without it)
+- Costis for PSOLoad and SDLoad
+- Samson for his AR bootloader
+- Titanik for the original PSUL

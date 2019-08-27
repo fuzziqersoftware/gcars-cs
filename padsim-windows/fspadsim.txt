@@ -1,0 +1,39 @@
+Fuzziqer Software Controller Simulator for GCARS CS
+Control Simulator Protocol v5.0
+
+Usage: padsim <options>
+Options:
+  -l: set local IP (if autodetect doesn't work)
+  -r: set remote IP (required)
+  -g: set GC Game ID (required)
+  -n: set network Game ID (default: 55555555)
+  -p: set player number (default: player 2)
+  -h: display help message
+
+Examples:
+  padsim -r192.168.1.50 -gGSNE -n1058EA9C -p3
+  padsim -l192.168.1.10 -r192.168.1.50 -gGALE
+
+Use PadSim to start the game on your GameCube, even if the PadSim
+is not player 1. If you launch PadSim after the game has started,
+just hold ENTER until PadSim states that the game has started. To
+end a PadSim game, press ESCAPE. To restart the GameCube as well,
+press SHIFT+ESCAPE.
+
+Key setup:
+
+Start: Return (Enter)
+A: Space
+B: Tab
+X: Left ALT
+Y: Left CTRL
+L: NumPad 0
+R: NumPad .
+Z: Left Shift
+Control stick: Arrow keys
+C Stick Left: 4, Right: 6, Up: 8, Down: 2
+D-Pad Left: J, Right: L, Up: I, Down: K
+
+Please note that this program does not require CS scripts. Also,
+PadSim should work with any game, provided that you have the pad
+addresses entered for that game.

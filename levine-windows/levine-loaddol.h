@@ -1,0 +1,2 @@
+void loaddol(char* filename);
+
